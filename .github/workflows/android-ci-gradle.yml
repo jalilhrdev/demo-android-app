@@ -47,14 +47,16 @@ jobs:
 
       - name: Sign App
         if: ${{ steps.regex-match.outputs.match != '' }}
-        uses: ilharp/sign-android-release@v1.0.4
+        uses: r0adkll/sign-android-release@v1
         with:
           releaseDir: app/build/outputs
-          signingKey: ${{ secrets.ANDROID_SIGNING_KEY }}
-          keyAlias: ${{ secrets.ALIAS }}
+          signingKeyBase64: ${{ secrets.ANDROID_SIGNING_KEY }}
+          alias: ${{ secrets.ALIAS }}
           keyStorePassword: ${{ secrets.KEYSTOREPASSWORD }}
           keyPassword: ${{ secrets.KEYPASSWORD }}
-
+        env:
+          # override default build-tools version (29.0.3) -- optional
+          BUILD_TOOLS_VERSION: "34.0.0"
       - name: Build Changelog
         if: ${{ steps.regex-match.outputs.match != '' }}
         uses: ardalanamini/auto-changelog@v3
