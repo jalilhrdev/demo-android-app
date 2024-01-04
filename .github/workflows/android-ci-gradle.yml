@@ -60,16 +60,10 @@ jobs:
             exit 1
           fi
 
-      - name: Install Android Build Tools
+      - name: Generate and Sign APK
         run: |
-          sdkmanager "build-tools;${ANDROID_BUILD_TOOLS_VERSION}"
-
-      - name: Sign the App Bundle
-        run: |
-          keytool -genkeypair -v -keystore keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias keyAlias -storepass ${{ secrets.KEYSTORE_STORE_PASSWORD }} -keypass ${{ secrets.KEYSTORE_KEY_PASSWORD }} -dname "CN=${{ secrets.KEYSTORE_COMMON_NAME }}, OU=${{ secrets.KEYSTORE_ORGANIZATION_UNIT }}, O=${{ secrets.KEYSTORE_ORGANIZATION }}, L=${{ secrets.KEYSTORE_CITY }}, ST=${{ secrets.KEYSTORE_STATE }}, C=${{ secrets.KEYSTORE_COUNTRY }}"
-          jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 -keystore keystore.jks -storepass ${{ secrets.KEYSTORE_STORE_PASSWORD }} -keypass ${{ secrets.KEYSTORE_KEY_PASSWORD }} -signedjar "$(pwd)/app-release-signed.apk" "$(pwd)/app/build/outputs/bundle/release/app-release.aab" keyAlias
-          "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/zipalign" -v 4 "$(pwd)/app-release-signed.apk" "$(pwd)/app-release-aligned.apk"
-          mv "$(pwd)/app-release-aligned.apk" "$(pwd)/app-release-signed.apk"
+          keytool -genkeypair -v -keystore keystore.p12 -keyalg RSA -keysize 2048 -validity 10000 -alias keyAlias -storepass ${{ secrets.KEYSTORE_STORE_PASSWORD }} -keypass ${{ secrets.KEYSTORE_KEY_PASSWORD }} -dname "CN=${{ secrets.KEYSTORE_COMMON_NAME }}, OU=${{ secrets.KEYSTORE_ORGANIZATION_UNIT }}, O=${{ secrets.KEYSTORE_ORGANIZATION }}, L=${{ secrets.KEYSTORE_CITY }}, ST=${{ secrets.KEYSTORE_STATE }}, C=${{ secrets.KEYSTORE_COUNTRY }}"
+          apksigner sign --ks keystore.p12 --ks-pass pass:${{ secrets.KEYSTORE_STORE_PASSWORD }} --ks-key-alias keyAlias --key-pass pass:${{ secrets.KEYSTORE_KEY_PASSWORD }} --out "$(pwd)/app-release-signed.apk" "$(pwd)/app/build/outputs/bundle/release/app-release.aab"
 
       - name: Check Signed APK File Existence
         run: |
