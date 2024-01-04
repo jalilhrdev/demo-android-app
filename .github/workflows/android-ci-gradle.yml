@@ -62,8 +62,8 @@ jobs:
 
       - name: Generate and Sign APK
         run: |
-          keytool -genkeypair -v -keystore keystore.p12 -keyalg RSA -keysize 2048 -validity 10000 -alias keyAlias -storepass "${{ secrets.KEYSTORE_STORE_PASSWORD }}" -keypass "${{ secrets.KEYSTORE_KEY_PASSWORD }}" -dname "CN=${{ secrets.KEYSTORE_COMMON_NAME }}, OU=${{ secrets.KEYSTORE_ORGANIZATION_UNIT }}, O=${{ secrets.KEYSTORE_ORGANIZATION }}, L=${{ secrets.KEYSTORE_CITY }}, ST=${{ secrets.KEYSTORE_STATE }}, C=${{ secrets.KEYSTORE_COUNTRY }}"
-          apksigner sign --ks keystore.p12 --ks-pass pass:${{ secrets.KEYSTORE_STORE_PASSWORD }} --ks-key-alias keyAlias --key-pass pass:${{ secrets.KEYSTORE_KEY_PASSWORD }} --out "$(pwd)/app-release-signed.apk" "$(pwd)/app/build/outputs/bundle/release/app-release.aab"
+          keytool -genkeypair -v -keystore keystore.p12 -keyalg RSA -keysize 2048 -validity 10000 -alias keyAlias -storepass "${{ secrets.KEYSTORE_STORE_PASSWORD }}" -keypass "secureKeyPassword123" -dname "CN=${{ secrets.KEYSTORE_COMMON_NAME }}, OU=${{ secrets.KEYSTORE_ORGANIZATION_UNIT }}, O=${{ secrets.KEYSTORE_ORGANIZATION }}, L=${{ secrets.KEYSTORE_CITY }}, ST=${{ secrets.KEYSTORE_STATE }}, C=${{ secrets.KEYSTORE_COUNTRY }}"
+          apksigner sign --ks keystore.p12 --ks-pass pass:${{ secrets.KEYSTORE_STORE_PASSWORD }} --ks-key-alias keyAlias --key-pass pass:secureKeyPassword123 --out "$(pwd)/app-release-signed.apk" "$(pwd)/app/build/outputs/bundle/release/app-release.aab"
 
       - name: Check Signed APK File Existence
         run: |
