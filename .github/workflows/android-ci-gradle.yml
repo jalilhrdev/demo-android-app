@@ -2,91 +2,48 @@ name: Android CI
 
 on:
   push:
-    branches: ["main"]
-  pull_request:
-    branches: ["main"]
-
-env:
-  ANDROID_BUILD_TOOLS_VERSION: "34.0.0"
-  ANDROID_COMPILE_SDK: 34
-  ANDROID_TARGET_SDK: 34
+    tags:
+      - '*'
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        shell: bash -e {0}
-
     steps:
-      - name: Use Node.js 12
-        uses: actions/setup-node@v4
-        with:
-          node-version: 12
-
-      - name: Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v2
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v2
+      - name: Setup JDK
+        uses: actions/setup-java@v1
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          java-version: 17
 
-      - name: Grant execute permissions for gradlew
+      - name: Generate KeyStore
+        run: |
+          keytool -genkeypair -v -keystore my-release-key.jks -storepass ${{ secrets.KEYSTORE_PASSWORD }} -alias ${{ secrets.ALIAS }} -keypass ${{ secrets.KEY_PASSWORD }} -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=example.com, OU=ID, O=Organization, L=City, S=State, C=Country"
+
+      - name: Encode KeyStore to Base64
+        run: openssl base64 -A -in my-release-key.jks -out base64.txt
+
+      - name: Make Gradle Executable
         run: chmod +x ./gradlew
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v2
+      - name: Build Release AAB
+        run: ./gradlew bundleRelease
+
+      - name: Sign AAB
+        uses: r0adkll/sign-android-release@v1
         with:
-          sdk-version: '34.0.0' # Adjust the version based on your needs
+          releaseDirectory: app/build/outputs/bundle/release
+          signingKeyBase64: ${{ secrets.SIGNINGKEYBASE64 }}
+          alias: ${{ secrets.ALIAS }}
+          keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
+          keyPassword: ${{ secrets.KEY_PASSWORD }}
 
-      - name: Print Gradle version
-        run: ./gradlew -v
+      - name: Build Release APK
+        run: ./gradlew assembleRelease
 
-      - name: Build with Gradle
-        run: ./gradlew bundleRelease  # Build the release bundle
-
-      - name: Print Gradle Output Location
-        run: |
-          echo "Gradle output location: $(pwd)/app/build/outputs/bundle/release/"
-
-      - name: Check APK File Existence
-        run: |
-          if [ ! -f "$(pwd)/app/build/outputs/bundle/release/app-release.aab" ]; then
-            echo "Error: App Bundle file not found!"
-            exit 1
-          fi
-
-      - name: Install Android Build Tools
-        run: |
-          sdkmanager "build-tools;${ANDROID_BUILD_TOOLS_VERSION}"
-
-      - name: Sign the App Bundle
-        run: |
-          keytool -genkeypair -v -keystore keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias keyAlias -storepass ${{ secrets.KEYSTORE_STORE_PASSWORD }} -keypass ${{ secrets.KEYSTORE_KEY_PASSWORD }} -dname "CN=${{ secrets.KEYSTORE_COMMON_NAME }}, OU=${{ secrets.KEYSTORE_ORGANIZATION_UNIT }}, O=${{ secrets.KEYSTORE_ORGANIZATION }}, L=${{ secrets.KEYSTORE_CITY }}, ST=${{ secrets.KEYSTORE_STATE }}, C=${{ secrets.KEYSTORE_COUNTRY }}"
-          jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 -keystore keystore.jks -storepass ${{ secrets.KEYSTORE_STORE_PASSWORD }} -keypass ${{ secrets.KEYSTORE_KEY_PASSWORD }} -signedjar "$(pwd)/app-release-signed.apk" "$(pwd)/app/build/outputs/bundle/release/app-release.aab" keyAlias
-          "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/zipalign" -v 4 "$(pwd)/app-release-signed.apk" "$(pwd)/app-release-aligned.apk"
-          mv "$(pwd)/app-release-aligned.apk" "$(pwd)/app-release-signed.apk"
-
-      - name: Check Signed APK File Existence
-        run: |
-          if [ ! -f "$(pwd)/app-release-signed.apk" ]; then
-            echo "Error: Signed APK file not found!"
-            exit 1
-          fi
-
-      - name: Print Secret Variables for Debugging
-        run: |
-          echo "KEYSTORE_STORE_PASSWORD: ${{ secrets.KEYSTORE_STORE_PASSWORD }}"
-          echo "KEYSTORE_KEY_PASSWORD: ${{ secrets.KEYSTORE_KEY_PASSWORD }}"
-
-      - name: Upload App Bundle and Signed APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-artifacts
-          path: |
-            app/build/outputs/bundle/release/app-release.aab
-            app-release-signed.apk
+      - name: Releasing APK
+        uses: r0user/release-apk@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
