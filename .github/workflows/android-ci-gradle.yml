@@ -26,6 +26,14 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Grant execute permissions for gradlew
+        run: chmod +x ./gradlew
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
+        with:
+          sdk-version: '34.0.0' # Adjust the version based on your needs
+
       - name: Print Gradle version
         run: ./gradlew -v
 
