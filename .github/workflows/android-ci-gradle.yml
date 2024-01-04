@@ -27,12 +27,29 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew bundleRelease  # Build the release bundle
 
+      - name: Print Gradle Output Location
+        run: echo "Gradle output location: $(pwd)/app/build/outputs/bundle/release/"
+
+      - name: Check APK File Existence
+        run: |
+          if [ ! -f app/build/outputs/bundle/release/app-release.aab ]; then
+            echo "Error: App Bundle file not found!"
+            exit 1
+          fi
+
       - name: Sign the App Bundle
         run: |
           keytool -genkeypair -v -keystore keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias keyAlias -storepass ${{ secrets.KEYSTORE_STORE_PASSWORD }} -keypass ${{ secrets.KEYSTORE_KEY_PASSWORD }} -dname "CN=${{ secrets.KEYSTORE_COMMON_NAME }}, OU=${{ secrets.KEYSTORE_ORGANIZATION_UNIT }}, O=${{ secrets.KEYSTORE_ORGANIZATION }}, L=${{ secrets.KEYSTORE_CITY }}, ST=${{ secrets.KEYSTORE_STATE }}, C=${{ secrets.KEYSTORE_COUNTRY }}"
           jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore keystore.jks -storepass ${{ secrets.KEYSTORE_STORE_PASSWORD }} -keypass ${{ secrets.KEYSTORE_KEY_PASSWORD }} -signedjar app-release-signed.apk app/build/outputs/bundle/release/app-release.aab keyAlias
           zipalign -v 4 app-release-signed.apk app-release-aligned.apk
           mv app-release-aligned.apk app-release-signed.apk
+
+      - name: Check Signed APK File Existence
+        run: |
+          if [ ! -f app-release-signed.apk ]; then
+            echo "Error: Signed APK file not found!"
+            exit 1
+          fi
 
       - name: Upload App Bundle and Signed APK
         uses: actions/upload-artifact@v2
