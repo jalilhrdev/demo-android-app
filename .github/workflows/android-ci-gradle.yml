@@ -50,7 +50,7 @@ jobs:
         uses: ilharp/sign-android-release@v1.0.4
         with:
           releaseDir: app/build/outputs
-          signingKey: ${{ secrets.SIGNINGKEYBASE64 }}
+          signingKey: ${{ secrets.ANDROID_SIGNING_KEY }}
           keyAlias: ${{ secrets.ALIAS }}
           keyStorePassword: ${{ secrets.KEYSTOREPASSWORD }}
           keyPassword: ${{ secrets.KEYPASSWORD }}
