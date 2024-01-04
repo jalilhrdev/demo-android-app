@@ -2,9 +2,9 @@ name: Android CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 env:
   ANDROID_BUILD_TOOLS_VERSION: "34.0.0"
@@ -60,10 +60,16 @@ jobs:
             exit 1
           fi
 
-      - name: Generate and Sign APK
+      - name: Install Android Build Tools
         run: |
-          keytool -genkeypair -v -keystore keystore.p12 -keyalg RSA -keysize 2048 -validity 10000 -alias keyAlias -storepass "${{ secrets.KEYSTORE_STORE_PASSWORD }}" -keypass "secureKeyPassword123" -dname "CN=${{ secrets.KEYSTORE_COMMON_NAME }}, OU=${{ secrets.KEYSTORE_ORGANIZATION_UNIT }}, O=${{ secrets.KEYSTORE_ORGANIZATION }}, L=${{ secrets.KEYSTORE_CITY }}, ST=${{ secrets.KEYSTORE_STATE }}, C=${{ secrets.KEYSTORE_COUNTRY }}"
-          apksigner sign --ks keystore.p12 --ks-pass pass:${{ secrets.KEYSTORE_STORE_PASSWORD }} --ks-key-alias keyAlias --key-pass pass:secureKeyPassword123 --out "$(pwd)/app-release-signed.apk" "$(pwd)/app/build/outputs/bundle/release/app-release.aab"
+          sdkmanager "build-tools;${ANDROID_BUILD_TOOLS_VERSION}"
+
+      - name: Sign the App Bundle
+        run: |
+          keytool -genkeypair -v -keystore keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias keyAlias -storepass ${{ secrets.KEYSTORE_STORE_PASSWORD }} -keypass ${{ secrets.KEYSTORE_KEY_PASSWORD }} -dname "CN=${{ secrets.KEYSTORE_COMMON_NAME }}, OU=${{ secrets.KEYSTORE_ORGANIZATION_UNIT }}, O=${{ secrets.KEYSTORE_ORGANIZATION }}, L=${{ secrets.KEYSTORE_CITY }}, ST=${{ secrets.KEYSTORE_STATE }}, C=${{ secrets.KEYSTORE_COUNTRY }}"
+          jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 -keystore keystore.jks -storepass ${{ secrets.KEYSTORE_STORE_PASSWORD }} -keypass ${{ secrets.KEYSTORE_KEY_PASSWORD }} -signedjar "$(pwd)/app-release-signed.apk" "$(pwd)/app/build/outputs/bundle/release/app-release.aab" keyAlias
+          "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/zipalign" -v 4 "$(pwd)/app-release-signed.apk" "$(pwd)/app-release-aligned.apk"
+          mv "$(pwd)/app-release-aligned.apk" "$(pwd)/app-release-signed.apk"
 
       - name: Check Signed APK File Existence
         run: |
@@ -72,8 +78,13 @@ jobs:
             exit 1
           fi
 
+      - name: Print Secret Variables for Debugging
+        run: |
+          echo "KEYSTORE_STORE_PASSWORD: ${{ secrets.KEYSTORE_STORE_PASSWORD }}"
+          echo "KEYSTORE_KEY_PASSWORD: ${{ secrets.KEYSTORE_KEY_PASSWORD }}"
+
       - name: Upload App Bundle and Signed APK
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: app-artifacts
           path: |
