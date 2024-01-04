@@ -1,19 +1,32 @@
-name: Build
+name: Build and Release
+
 on:
   push:
     branches:
       - 'main'
+
 jobs:
-  Build:
+  Build-and-Release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
-      - uses: kaisugi/action-regex-match@v1.0.0
+      # Debug: Show the commit message
+      - name: Get the commit message
+        run: |
+          echo "Commit message: ${{ github.event.head_commit.message }}"
+
+      - name: Check version in commit message
         id: regex-match
+        uses: kaisugi/action-regex-match@v1.0.0
         with:
           text: ${{ github.event.head_commit.message }}
           regex: '^v[0-9]+\.[0-9]+\.[0-9]+$'
+
+      # Debug: Show the result of the regex match
+      - name: Debug regex match result
+        run: | 
+          echo "Regex Match Output: ${{ steps.regex-match.outputs.match }}"
 
       - name: Setup JDK
         uses: actions/setup-java@v3
@@ -35,7 +48,6 @@ jobs:
 
       - name: Sign App
         if: ${{ steps.regex-match.outputs.match != '' }}
-        id: sign_app
         uses: ilharp/sign-android-release@v1.0.4
         with:
           releaseDir: app/build/outputs
@@ -46,7 +58,6 @@ jobs:
 
       - name: Build Changelog
         if: ${{ steps.regex-match.outputs.match != '' }}
-        id: changelog
         uses: ardalanamini/auto-changelog@v3
         with:
           mention-authors: false
@@ -56,7 +67,6 @@ jobs:
 
       - name: Create Release
         if: ${{ steps.regex-match.outputs.match != '' }}
-        id: create_release
         uses: ncipollo/release-action@v1.13.0
         with:
           artifacts: "app/build/outputs/app-release-signed.aab, app/build/outputs/app-release-signed.apk"
