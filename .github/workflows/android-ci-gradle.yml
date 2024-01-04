@@ -23,7 +23,7 @@ jobs:
           text: ${{ github.event.head_commit.message }}
           regex: '^v[0-9]+\.[0-9]+\.[0-9]+$'
 
-      # Debug: Show the result of the regex match
+      # Debug: Show the result of the regex match commit
       - name: Debug regex match result
         run: | 
           echo "Regex Match Output: ${{ steps.regex-match.outputs.match }}"
