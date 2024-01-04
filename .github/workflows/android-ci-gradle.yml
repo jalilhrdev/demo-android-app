@@ -47,7 +47,7 @@ jobs:
 
       - name: Sign App
         if: ${{ steps.regex-match.outputs.match != '' }}
-        uses: r0adkll/sign-android-release@v1
+        uses: upup-company/apksigner-android@v1
         id: sign_app
         with:
           releaseDirectory: app/build/outputs
@@ -55,6 +55,7 @@ jobs:
           alias: ${{ secrets.ALIAS }}
           keyStorePassword: ${{ secrets.KEYSTOREPASSWORD }}
           keyPassword: ${{ secrets.KEYPASSWORD }}
+          customArgs: --v1-signing-enabled,true,--v2-signing-enabled,true
         env:
           # override default build-tools version (29.0.3) -- optional
           BUILD_TOOLS_VERSION: "30.0.2"
