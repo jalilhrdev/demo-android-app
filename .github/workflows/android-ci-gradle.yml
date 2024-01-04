@@ -21,10 +21,10 @@ jobs:
         shell: bash -e {0}
 
     steps:
-      - name: Use Node.js 16
+      - name: Use Node.js 12
         uses: actions/setup-node@v4
         with:
-          node-version: 16
+          node-version: 12
 
       - name: Checkout code
         uses: actions/checkout@v2
