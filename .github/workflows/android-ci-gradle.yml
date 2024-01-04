@@ -16,7 +16,16 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        shell: bash -e {0}
+
     steps:
+      - name: Use Node.js 16
+        uses: actions/setup-node@v4
+        with:
+          node-version: 16
+
       - name: Checkout code
         uses: actions/checkout@v2
 
@@ -70,15 +79,6 @@ jobs:
           fi
 
       - name: Upload App Bundle and Signed APK
-        uses: actions/upload-artifact@v2
-        with:
-          name: app-artifacts
-          path: |
-            "$(pwd)/app/build/outputs/bundle/release/app-release.aab"
-            "$(pwd)/app-release-signed.apk"
-
-
-      - name: Upload App Bundle and Signed APK DEMO
         uses: actions/upload-artifact@v2
         with:
           name: app-artifacts
