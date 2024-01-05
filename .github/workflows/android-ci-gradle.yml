@@ -45,6 +45,24 @@ jobs:
           mv app/build/outputs/apk/release/app-release-unsigned.apk app/build/outputs/app-release.apk
           mv app/build/outputs/bundle/release/app-release.aab app/build/outputs/app-release.aab
 
+
+
+
+      - uses: Tlaster/android-sign@v1
+        name: Sign app APK
+        with:
+          releaseDirectory: |
+            app/build/outputs/apk/release
+            app/build/outputs/bundle/release
+          signingKeyBase64: ${{ secrets.ANDROID_SIGNING_KEY }}
+          output: build/release/signed
+          alias: ${{ secrets.ALIAS }}
+          keyStorePassword: ${{ secrets.KEYSTOREPASSWORD }}
+          keyPassword: ${{ secrets.KEYPASSWORD }}
+        env:
+          BUILD_TOOLS_VERSION: "30.0.2"
+
+
       - name: Sign App
         if: ${{ steps.regex-match.outputs.match != '' }}
         uses: upup-company/apksigner-android@v1
@@ -55,15 +73,10 @@ jobs:
           alias: ${{ secrets.ALIAS }}
           keyStorePassword: ${{ secrets.KEYSTOREPASSWORD }}
           keyPassword: ${{ secrets.KEYPASSWORD }}
+          customArgs: --v1-signing-enabled,true,--v2-signing-enabled,true
         env:
           # override default build-tools version (29.0.3) -- optional
           BUILD_TOOLS_VERSION: "30.0.2"
-
-
-
-
-
-
 
       - name: Upload signedReleaseFile
       # Example use of `signedReleaseFile` output -- not needed
