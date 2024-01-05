@@ -45,6 +45,7 @@ jobs:
           alias: ${{ secrets.ALIAS }}
           keyStorePassword: ${{ secrets.KEYSTOREPASSWORD }}
           keyPassword: ${{ secrets.KEYPASSWORD }}
+          customArgs: --v1-signing-enabled,true,--v2-signing-enabled,true
 
       - name: Sign APK
         run: ./gradlew assembleRelease
