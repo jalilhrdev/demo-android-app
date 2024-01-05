@@ -59,11 +59,11 @@ jobs:
           # Decode the Android signing key and save it as keystore.jks
           echo "${{ secrets.ANDROID_SIGNING_KEY }}" | base64 -d > keystore.jks
           
-          # Sign the App Bundle
-          apksigner sign --ks keystore.jks --ks-pass pass:${{ secrets.KEYSTOREPASSWORD }} --ks-key-alias ${{ secrets.ALIAS }} --key-pass pass:${{ secrets.KEYPASSWORD }} --in app/build/outputs/bundle/release/app-release.aab --out app/build/outputs/bundle/release/app-release-signed.aab
+          # Sign the App Bundle using apksigner from Android Build Tools
+          "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/apksigner" sign --ks keystore.jks --ks-pass pass:${{ secrets.KEYSTOREPASSWORD }} --ks-key-alias ${{ secrets.ALIAS }} --key-pass pass:${{ secrets.KEYPASSWORD }} --in app/build/outputs/bundle/release/app-release.aab --out app/build/outputs/bundle/release/app-release-signed.aab
           
           # Verify the signed App Bundle
-          apksigner verify --verbose app/build/outputs/bundle/release/app-release-signed.aab
+          "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/apksigner" verify --verbose app/build/outputs/bundle/release/app-release-signed.aab
 
 
       - name: Check Signed APK File Existence
