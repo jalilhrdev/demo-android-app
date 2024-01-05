@@ -38,7 +38,8 @@ jobs:
         run: ./gradlew bundleRelease
 
       - name: Sign AAB
-        uses: r0adkll/sign-android-release@v1
+        uses: upup-company/apksigner-android@v1
+        id: sign_app
         with:
           releaseDirectory: app/build/outputs/bundle/release
           signingKeyBase64: ${{ secrets.ANDROID_SIGNING_KEY }}
