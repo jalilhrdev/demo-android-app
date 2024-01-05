@@ -1,105 +1,62 @@
-name: Build and Release
+name: Android Publish
 
 on:
   push:
     branches:
-      - 'main'
+      - main
 
 jobs:
-  Build-and-Release:
+  build:
+
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v2
 
-      # Debug: Show the commit message
-      - name: Get the commit message
-        run: |
-          echo "Commit message: ${{ github.event.head_commit.message }}"
-
-      - uses: kaisugi/action-regex-match@v1.0.0
-        id: regex-match
+      - name: Set Up JDK
+        uses: actions/setup-java@v2
         with:
-          text: ${{ github.event.head_commit.message }}
-          regex: 'version [0-9]+\.[0-9]+\.[0-9]+'
-
-      # Debug: Show the result of the regex match commit
-      - name: Debug regex match result
-        run: | 
-          echo "Regex Match Output: ${{ steps.regex-match.outputs.match }}"
-
-      - name: Setup JDK
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
+          distribution: 'adopt'
           java-version: '17'
-          cache: 'gradle'
 
-      - name: Build App
+      - name: Change wrapper permissions
+        run: chmod +x ./gradlew
+
+      - name: Update Gradle Wrapper
+        run: ./gradlew wrapper --gradle-version=8.2
+
+      - name: Run Tests
+        run: ./gradlew test
+
+      - name: Build Project
+        run: ./gradlew build
+
+      - name: Build Release AAB
+        run: ./gradlew bundleRelease
+
+      - name: Sign AAB
         run: |
-          bash ./gradlew assembleRelease
-          bash ./gradlew bundleRelease
+          bundletool build-apks --bundle=app/build/outputs/bundle/release/app-release.aab --output=app/build/outputs/bundle/release/app-release-signed.apks
+          apksigner sign --ks ${{ secrets.ANDROID_SIGNING_KEY }} --ks-pass pass:${{ secrets.KEYSTOREPASSWORD }} --ks-key-alias ${{ secrets.ALIAS }} --key-pass pass:${{ secrets.KEYPASSWORD }} --in app/build/outputs/bundle/release/app-release-signed.apks --out app/build/outputs/bundle/release/app-release-signed-aligned.apks
 
-      - name: Move files
-        if: ${{ steps.regex-match.outputs.match != '' }}
+      - name: Sign APK
         run: |
-          cp app/build/outputs/apk/release/app-release-unsigned.apk app/build/outputs/app-release.apk
-          cp app/build/outputs/bundle/release/app-release.aab app/build/outputs/app-release.aab
+          apksigner sign --ks ${{ secrets.ANDROID_SIGNING_KEY }} --ks-pass pass:${{ secrets.KEYSTOREPASSWORD }} --ks-key-alias ${{ secrets.ALIAS }} --key-pass pass:${{ secrets.KEYPASSWORD }} --in app/build/outputs/apk/release/app-release-unsigned.apk --out app/build/outputs/apk/release/app-release-signed.apk
 
-
-
-
-      - uses: Tlaster/android-sign@v1
-        name: Sign app APK
-        with:
-          releaseDirectory: |
-            app/build/outputs/apk/release
-            app/build/outputs/bundle/release
-          signingKeyBase64: ${{ secrets.ANDROID_SIGNING_KEY }}
-          output: build/release/signed
-          alias: ${{ secrets.ALIAS }}
-          keyStorePassword: ${{ secrets.KEYSTOREPASSWORD }}
-          keyPassword: ${{ secrets.KEYPASSWORD }}
-        env:
-          BUILD_TOOLS_VERSION: "30.0.2"
-
-
-      - name: Sign App
-        if: ${{ steps.regex-match.outputs.match != '' }}
-        uses: upup-company/apksigner-android@v1
-        id: sign_app
-        with:
-          releaseDirectory: app/build/outputs
-          signingKeyBase64: ${{ secrets.ANDROID_SIGNING_KEY }}
-          alias: ${{ secrets.ALIAS }}
-          keyStorePassword: ${{ secrets.KEYSTOREPASSWORD }}
-          keyPassword: ${{ secrets.KEYPASSWORD }}
-          customArgs: --v1-signing-enabled,true,--v2-signing-enabled,true
-        env:
-          # override default build-tools version (29.0.3) -- optional
-          BUILD_TOOLS_VERSION: "30.0.2"
-
-      - name: Upload signedReleaseFile
-      # Example use of `signedReleaseFile` output -- not needed
+      - name: Upload Artifact
         uses: actions/upload-artifact@v2
         with:
-          name: Signed app bundle
-          path: ${{steps.sign_app.outputs.signedReleaseFile}}
+          name: release-artifacts
+          path: |
+            app/build/outputs/bundle/release/*.aab
+            app/build/outputs/bundle/release/app-release-signed-aligned.apks
+            app/build/outputs/apk/release/app-release-signed.apk
 
-      - name: Build Changelog
-        if: ${{ steps.regex-match.outputs.match != '' }}
-        uses: ardalanamini/auto-changelog@v3
-        with:
-          mention-authors: false
-          mention-new-contributors: false
-          include-compare: false
-          semver: false
+      - name: List Files
+        run: |
+          ls -R app/build/outputs/bundle/release/
+          ls -R app/build/outputs/apk/release/
 
-      - name: Create Release
-        if: ${{ steps.regex-match.outputs.match != '' }}
-        uses: ncipollo/release-action@v1.13.0
-        with:
-          artifacts: "app/build/outputs/app-release-signed.aab, app/build/outputs/app-release-signed.apk"
-          body: ${{ steps.changelog.outputs.changelog }}
-          tag: ${{ github.event.head_commit.message }}
-          name: Release ${{ github.event.head_commit.message }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Display Artifact Token
+        run: echo ${{ github.token }}
