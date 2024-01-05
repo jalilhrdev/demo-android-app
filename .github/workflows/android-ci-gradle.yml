@@ -42,8 +42,8 @@ jobs:
       - name: Move files
         if: ${{ steps.regex-match.outputs.match != '' }}
         run: |
-          mv app/build/outputs/apk/release/app-release-unsigned.apk app/build/outputs/app-release.apk
-          mv app/build/outputs/bundle/release/app-release.aab app/build/outputs/app-release.aab
+          cp app/build/outputs/apk/release/app-release-unsigned.apk app/build/outputs/app-release.apk
+          cp app/build/outputs/bundle/release/app-release.aab app/build/outputs/app-release.aab
 
 
 
