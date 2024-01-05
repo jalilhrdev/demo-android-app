@@ -26,6 +26,14 @@ jobs:
       - name: Update Gradle Wrapper
         run: ./gradlew wrapper --gradle-version=8.2
 
+      - name: Download bundletool
+        run: |
+          mkdir -p $HOME/bin
+          wget https://github.com/google/bundletool/releases/download/1.10.0/bundletool-all-1.10.0.jar -O $HOME/bin/bundletool.jar
+          echo 'java -jar $HOME/bin/bundletool.jar "$@"' > $HOME/bin/bundletool
+          chmod +x $HOME/bin/bundletool
+          export PATH=$PATH:$HOME/bin
+
       - name: Run Tests
         run: ./gradlew test
 
