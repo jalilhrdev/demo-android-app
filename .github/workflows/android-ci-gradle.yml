@@ -51,6 +51,12 @@ jobs:
         run: |
           apksigner sign --ks keystore.jks --ks-pass pass:${{ secrets.KEYSTOREPASSWORD }} --ks-key-alias ${{ secrets.ALIAS }} --key-pass pass:${{ secrets.KEYPASSWORD }} --in app/build/outputs/apk/release/app-release-unsigned.apk --out app/build/outputs/apk/release/app-release-signed.apk
 
+
+      - name: Sign AAB
+        run: |
+          java -jar bundletool.jar build-apks --bundle=app/build/outputs/bundle/release/app-release.aab --output=app/build/outputs/bundle/release/app-release-signed.apks --ks keystore.jks --ks-pass pass:${{ secrets.KEYSTOREPASSWORD }} --ks-key-alias ${{ secrets.ALIAS }} --key-pass pass:${{ secrets.KEYPASSWORD }}
+    
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v2
         with:
