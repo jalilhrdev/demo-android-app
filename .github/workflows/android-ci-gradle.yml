@@ -43,11 +43,6 @@ jobs:
       - name: Build Release AAB
         run: ./gradlew bundleRelease
 
-      - name: Sign AAB
-        run: |
-          java -jar bundletool.jar build-apks --bundle=app/build/outputs/bundle/release/app-release.aab --output=app/build/outputs/bundle/release/app-release-signed.apks
-          apksigner sign --ks ${{ secrets.ANDROID_SIGNING_KEY }} --ks-pass pass:${{ secrets.KEYSTOREPASSWORD }} --ks-key-alias ${{ secrets.ALIAS }} --key-pass pass:${{ secrets.KEYPASSWORD }} --in app/build/outputs/bundle/release/app-release-signed.apks --out app/build/outputs/bundle/release/app-release-signed-aligned.apks
-
       - name: Sign APK
         run: |
           apksigner sign --ks ${{ secrets.ANDROID_SIGNING_KEY }} --ks-pass pass:${{ secrets.KEYSTOREPASSWORD }} --ks-key-alias ${{ secrets.ALIAS }} --key-pass pass:${{ secrets.KEYPASSWORD }} --in app/build/outputs/apk/release/app-release-unsigned.apk --out app/build/outputs/apk/release/app-release-signed.apk
