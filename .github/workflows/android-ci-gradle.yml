@@ -43,6 +43,15 @@ jobs:
       - name: Build Release AAB
         run: ./gradlew bundleRelease
 
+
+      - name: Debug Information
+        run: |
+          echo "Listing AAB files:"
+          ls -R app/build/outputs/bundle/release/
+
+          echo "Listing APK files:"
+          ls -R app/build/outputs/apk/release/
+
       - name: Decode Signing Key and Store as keystore.jks
         run: |
           echo "${{ secrets.ANDROID_SIGNING_KEY }}" | base64 -d > keystore.jks
