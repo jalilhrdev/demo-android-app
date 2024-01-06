@@ -55,10 +55,16 @@ jobs:
       run: |
         echo $ENCODED_KEYSTORE | base64 -d > $DECODED_KEYSTORE_PATH
     
+    - name: Debug Keystore
+      run: |
+        ls -l keystore.jks
+        tail keystore.jks
+        wc -l keystore.jks
+    
     - name: Verify Decoded Keystore
       run: keytool -list -v -keystore keystore.jks -storepass "${{ secrets.KEYSTOREPASSWORD }}"
-
-        
+    
+      
     - name: Sign APK and AAB
       run: |
         # Decode the Android signing key and save it as keystore.jks
