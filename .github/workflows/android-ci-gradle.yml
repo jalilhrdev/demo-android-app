@@ -51,9 +51,12 @@ jobs:
       run: |
         # Decode the Android signing key and save it as keystore.jks
         echo "${{ secrets.ANDROID_SIGNING_KEY }}" | base64 -d > keystore.jks
-        
+
+        # Verify the keystore using keytool
+        keytool -list -v -keystore keystore.jks -storepass "${{ secrets.KEYSTOREPASSWORD }}"
+
         # Sign the Release APK using apksigner from Android Build Tools
-        "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/apksigner" sign --ks $(pwd)/keystore.jks --ks-key-alias ${{ secrets.ALIAS }} --ks-pass pass:${{ secrets.KEYSTOREPASSWORD }} --key-pass pass:${{ secrets.KEYPASSWORD }} --in $(pwd)/${{ env.PATH_UNSIGNED }}/apk/release/app-release-unsigned.apk --out $(pwd)/${{ env.PATH_UNSIGNED }}/apk/release/app-release-signed.apk 
+        "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/apksigner" sign --ks $(pwd)/keystore.jks --ks-key-alias ${{ secrets.ALIAS }} --ks-pass pass:${{ secrets.KEYSTOREPASSWORD }}  --in $(pwd)/${{ env.PATH_UNSIGNED }}/apk/release/app-release-unsigned.apk --out $(pwd)/${{ env.PATH_UNSIGNED }}/apk/release/app-release-signed.apk 
         
         # Verify the signed Release APK
         "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/apksigner" verify --verbose $(pwd)/${{ env.PATH_UNSIGNED }}/apk/release/app-release-signed.apk
