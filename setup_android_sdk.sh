@@ -24,4 +24,6 @@ apksigner_path="$sdk_path/build-tools/$build_tools_version/apksigner"
 
 
 keytool -genkeypair -v -keystore keystore.jks -keyalg RSA -keysize 2048 -validity 3650 -alias mykey -storepass "DevOps#5861" -keypass "DevOps#123" -dname "CN=YourName, OU=YourOrganizationalUnit, O=YourOrganization, L=YourCity, ST=YourState, C=YourCountry"
+openssl base64 -A -in keystore.jks -out base64.txt
+
 /root/android_sdk/cmdline-tools/build-tools/34.0.0/apksigner sign --ks keystore.jks --ks-key-alias mykey --ks-pass "DevOps#5861" --key-pass "DevOps#5861" --out signed_app.apk --in app/build/outputs/apk/release/app-release-unsigned.apk && /root/android_sdk/cmdline-tools/build-tools/34.0.0/apksigner verify signed_app.apk
