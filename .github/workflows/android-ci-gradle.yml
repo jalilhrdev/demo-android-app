@@ -50,8 +50,6 @@ jobs:
 
 
     - name: Decode Android Signing Key
-      env:
-        ANDROID_SIGNING_KEY: ${{ secrets.ANDROID_SIGNING_KEY }}
       run: |
         echo "${{env.ANDROID_SIGNING_KEY}}" | base64 -d > keystore.jks
 
@@ -63,8 +61,6 @@ jobs:
         wc -l keystore.jks
     
     - name: Verify Decoded Keystore
-      env:
-        KEYSTOREPASSWORD: ${{ secrets.KEYSTOREPASSWORD }}
       run: keytool -list -v -keystore keystore.jks -storepass "${{env.KEYSTOREPASSWORD}}"
     
     
