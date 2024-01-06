@@ -60,10 +60,10 @@ jobs:
           echo "${{ secrets.ANDROID_SIGNING_KEY }}" | base64 -d > keystore.jks
           
           # Sign the Release APK using apksigner from Android Build Tools
-          "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/apksigner" sign --ks keystore.jks --ks-key-alias ${{ secrets.ALIAS }} --ks-pass pass:${{ secrets.KEYSTOREPASSWORD }}  $(pwd)/app/build/outputs/apk/release/app-release-unsigned.apk
+          "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/apksigner" sign --ks keystore.jks --ks-key-alias ${{ secrets.ALIAS }} --ks-pass pass:${{ secrets.KEYSTOREPASSWORD }}  "$(pwd)/app/build/outputs/apk/release/app-release-unsigned.apk"
           
           # Verify the signed Release APK
-          "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/apksigner" verify --verbose $(pwd)/app/build/outputs/apk/release/app-release-unsigned.apk
+          "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/apksigner" verify --verbose "$(pwd)/app/build/outputs/apk/release/app-release-unsigned.apk"
 
       - name: Check Signed APK File Existence
         run: |
