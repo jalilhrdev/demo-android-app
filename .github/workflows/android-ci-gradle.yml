@@ -54,7 +54,7 @@ jobs:
       uses: timheuer/base64-to-file@v1.2
       with:
         fileName: 'keystore.jks'
-        encodedString: ${{ secrets.ANDROID_SIGNING_KEY }}
+        encodedString: ${{ vars.ANDROID_SIGNING_KEY }}
     
     - name: Debug Keystore
       run: |
@@ -64,7 +64,7 @@ jobs:
     
     - name: Verify Decoded Keystore
       env:
-        KEYSTOREPASSWORD: ${{ secrets.KEYSTOREPASSWORD }}
+        KEYSTOREPASSWORD: ${{ vars.KEYSTOREPASSWORD }}
       run: keytool -list -v -keystore keystore.jks -storepass "${KEYSTOREPASSWORD}"
     
     - name: Sign APK and AAB
