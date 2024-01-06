@@ -47,8 +47,17 @@ jobs:
         chmod +x ./gradlew
         ./gradlew assembleRelease bundleRelease
 
-
-
+    - name: Verify secret is set
+      run: |
+        if [ -z "${MY_SECRET}" ]; then
+          echo "Secret is not set"
+          exit 1
+        else
+          echo "Secret is set"
+        fi
+      env:
+        MY_SECRET: ${{ secrets.ANDROID_SIGNING_KEY }}
+    
     - name: Decode Android Signing Key
       id: decode_key
       uses: timheuer/base64-to-file@v1.2
@@ -64,7 +73,7 @@ jobs:
     
     - name: Verify Decoded Keystore
       env:
-        KEYSTOREPASSWORD: ${{ vars.KEYSTOREPASSWORD }}
+        KEYSTOREPASSWORD: ${{ secrets.KEYSTOREPASSWORD }}
       run: keytool -list -v -keystore keystore.jks -storepass "${KEYSTOREPASSWORD}"
     
     - name: Sign APK and AAB
