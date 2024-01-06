@@ -1,93 +1,66 @@
-name: Android CI
+name: Build and Sign APK and AAB
+
 on:
   push:
-    branches: ["main"]
-  pull_request:
-    branches: ["main"]
+    branches:
+      - main
+
 env:
   ANDROID_BUILD_TOOLS_VERSION: "34.0.0"
   ANDROID_COMPILE_SDK: 34
-  PTATH_UNSIGNED: ""
+  PATH_UNSIGNED: "app/build/outputs"
   ANDROID_TARGET_SDK: 34
-
+  CMD_TOOLS_VERSION: "10406996" # Change this to the desired version
 
 jobs:
-  build:
+  build_and_sign:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash -e {0}
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v2
-        with:
-          distribution: 'temurin'
-          java-version: '17'
+    - name: Set up JDK 17
+      uses: actions/setup-java@v2
+      with:
+        distribution: 'temurin'
+        java-version: '17'
 
-      - name: Grant execute permissions for gradlew
-        run: chmod +x ./gradlew
+    - name: Install Android SDK
+      run: |
+        mkdir -p $ANDROID_HOME
+        wget https://dl.google.com/android/repository/commandlinetools-linux-${CMD_TOOLS_VERSION}_latest.zip -O android_sdk.zip
+        unzip -qq android_sdk.zip -d $ANDROID_HOME
+        rm android_sdk.zip
+        export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v2
-        with:
-          sdk-version: "${{ env.ANDROID_BUILD_TOOLS_VERSION }}"
+    - name: Accept SDK licenses
+      run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
 
-      - name: Print Gradle version
-        run: ./gradlew -v
+    - name: Update and Install SDK components
+      run: |
+        $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --update
+        $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --update --sdk_root=$ANDROID_HOME
+        $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "tools" "platforms;android-${ANDROID_COMPILE_SDK}" "build-tools;${ANDROID_BUILD_TOOLS_VERSION}" --sdk_root=$ANDROID_HOME --licenses
 
-      - name: Build Release APK
-        run: ./gradlew assembleRelease
+    - name: Build unsigned APK and AAB
+      run: |
+        chmod +x ./gradlew
+        ./gradlew assembleRelease bundleRelease
 
-      - name: Print Gradle Output Location
-        run: |
-          echo "Gradle output location: $(pwd)/app/build/outputs/apk/release/"
-
-      - name: Check APK File Existence
-        run: |
-          if [ ! -f "$(pwd)/app/build/outputs/apk/release/app-release-unsigned.apk" ]; then
-            echo "Error: App Bundle file not found!"
-            exit 1
-          fi
-
-      - name: Install Android Build Tools
-        run: sdkmanager "build-tools;${ANDROID_BUILD_TOOLS_VERSION}"
-
-
-      - name: Sign APK and AAB
-        run: |
-          # Decode the Android signing key and save it as keystore.jks
-          echo "${{ secrets.ANDROID_SIGNING_KEY }}" | base64 -d > keystore.jks
-          
-          # Sign the Release APK using apksigner from Android Build Tools
-          "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/apksigner" sign --ks $(pwd)/keystore.jks --ks-key-alias ${{ secrets.ALIAS }} --ks-pass pass:${{ secrets.KEYSTOREPASSWORD }} --key-pass pass:${{ secrets.KEYPASSWORD }} --in $(pwd)/app/build/outputs/apk/release/app-release-unsigned.apk --out $(pwd)/app/build/outputs/apk/release/app-release-signed.apk 
-          
-          # Verify the signed Release APK
-          "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/apksigner" verify --verbose $(pwd)/app/build/outputs/apk/release/app-release-signed.apk
-
-          # Sign the AAB using bundletool
-          "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/bundletool" build-bundle --modules=$(pwd)/app/build/outputs/bundle/release/app-release.aab --output=$(pwd)/app/build/outputs/bundle/release/signed_app_bundle.aab --ks $(pwd)/keystore.jks --ks-pass pass:${{ secrets.KEYSTOREPASSWORD }} --ks-key-alias ${{ secrets.ALIAS }} --key-pass pass:${{ secrets.KEYPASSWORD }}
-          
-          # Verify the signed AAB
-          "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/bundletool" validate --bundle $(pwd)/app/build/outputs/bundle/release/signed_app_bundle.aab
+    - name: Sign APK and AAB
+      run: |
+        # Decode the Android signing key and save it as keystore.jks
+        echo "${{ secrets.ANDROID_SIGNING_KEY }}" | base64 -d > keystore.jks
         
-      - name: Check Signed APK File Existence
-        run: |
-          if [ ! -f "$(pwd)/app/build/outputs/apk/release/app-release-signed.apk" ]; then
-            echo "Error: Signed APK file not found!"
-            exit 1
-          fi
+        # Sign the Release APK using apksigner from Android Build Tools
+        "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/apksigner" sign --ks $(pwd)/keystore.jks --ks-key-alias ${{ secrets.ALIAS }} --ks-pass pass:${{ secrets.KEYSTOREPASSWORD }} --key-pass pass:${{ secrets.KEYPASSWORD }} --in $(pwd)/${{ env.PATH_UNSIGNED }}/apk/release/app-release-unsigned.apk --out $(pwd)/${{ env.PATH_UNSIGNED }}/apk/release/app-release-signed.apk 
+        
+        # Verify the signed Release APK
+        "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/apksigner" verify --verbose $(pwd)/${{ env.PATH_UNSIGNED }}/apk/release/app-release-signed.apk
 
-      - name: Print Secret Variables for Debugging
-        run: |
-          echo "KEYSTORE_STORE_PASSWORD: ${{ secrets.KEYSTOREPASSWORD }}"
-          echo "KEYSTORE_KEY_PASSWORD: ${{ secrets.KEYPASSWORD }}"
-
-      - name: Upload App Bundle and Signed APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-artifacts
-          path: |
-            app/build/outputs/apk/release/app-release-signed.apk
+        # Sign the AAB using bundletool
+        "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/bundletool" build-bundle --modules=$(pwd)/${{ env.PATH_UNSIGNED }}/bundle/release/app-release.aab --output=$(pwd)/${{ env.PATH_UNSIGNED }}/bundle/release/signed_app_bundle.aab --ks $(pwd)/keystore.jks --ks-pass pass:${{ secrets.KEYSTOREPASSWORD }} --ks-key-alias ${{ secrets.ALIAS }} --key-pass pass:${{ secrets.KEYPASSWORD }}
+        
+        # Verify the signed AAB
+        "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/bundletool" validate --bundle $(pwd)/${{ env.PATH_UNSIGNED }}/bundle/release/signed_app_bundle.aab
