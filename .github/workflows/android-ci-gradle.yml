@@ -50,17 +50,20 @@ jobs:
     - name: Decode Android Signing Key
       run: |
         echo "${{ secrets.ANDROID_SIGNING_KEY }}" | base64 -d > keystore.jks
-    
-    - name: Sign APK and AAB
-      run: |
-        # Sign the Release APK using apksigner from Android Build Tools
-        "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/apksigner" sign --ks keystore.jks --ks-key-alias ${{ secrets.ALIAS }} --ks-pass pass:${{ secrets.KEYSTOREPASSWORD }} --in $(pwd)/${{ env.PATH_UNSIGNED }}/apk/release/app-release-unsigned.apk --out $(pwd)/${{ env.PATH_UNSIGNED }}/apk/release/app-release-signed.apk 
-        
-        # Verify the signed Release APK
-        "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/apksigner" verify --verbose $(pwd)/${{ env.PATH_UNSIGNED }}/apk/release/app-release-signed.apk
 
-        # Sign the AAB using bundletool
-        "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/bundletool" build-bundle --modules=$(pwd)/${{ env.PATH_UNSIGNED }}/bundle/release/app-release.aab --output=$(pwd)/${{ env.PATH_UNSIGNED }}/bundle/release/signed_app_bundle.aab --ks keystore.jks --ks-pass pass:${{ secrets.KEYSTOREPASSWORD }} --ks-key-alias ${{ secrets.ALIAS }} --key-pass pass:${{ secrets.KEYPASSWORD }}
-        
-        # Verify the signed AAB
-        "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/bundletool" validate --bundle $(pwd)/${{ env.PATH_UNSIGNED }}/bundle/release/signed_app_bundle.aab
+    - name: Check Keystore File
+      run: |
+        if [ -s keystore.jks ]; then
+          echo "Keystore file is not empty"
+        else
+          echo "Keystore file is empty"
+          exit 1
+        fi
+
+    - name: Sign APK
+      run: |
+        "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/apksigner" sign --ks keystore.jks --ks-key-alias ${{ secrets.ALIAS }} --ks-pass pass:${{ secrets.KEYSTOREPASSWORD }} --in $(pwd)/${{ env.PATH_UNSIGNED }}/apk/release/app-release-unsigned.apk --out $(pwd)/${{ env.PATH_UNSIGNED }}/apk/release/app-release-signed.apk 
+
+    - name: Verify Signed APK
+      run: |
+        "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/apksigner" verify --verbose $(pwd)/${{ env.PATH_UNSIGNED }}/apk/release/app-release-signed.apk
