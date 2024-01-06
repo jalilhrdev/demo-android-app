@@ -48,12 +48,12 @@ jobs:
         ./gradlew assembleRelease bundleRelease
 
 
-
     - name: Decode Android Signing Key
       run: |
-        echo "${{env.ANDROID_SIGNING_KEY}}" | base64 -d > keystore.jks
-
-              
+        decoded_signing_key=$(echo "${{ secrets.ANDROID_SIGNING_KEY }}" | base64 -d)
+        echo "$decoded_signing_key" > keystore.jks
+        echo "DECODED_SIGNING_KEY=$decoded_signing_key" >> $GITHUB_ENV
+    
     - name: Debug Keystore
       run: |
         ls -l keystore.jks
@@ -61,8 +61,9 @@ jobs:
         wc -l keystore.jks
     
     - name: Verify Decoded Keystore
-      run: keytool -list -v -keystore keystore.jks -storepass "${{env.KEYSTOREPASSWORD}}"
-    
+      run: keytool -list -v -keystore keystore.jks -storepass "${{ secrets.KEYSTOREPASSWORD }}"
+      env:
+        DECODED_SIGNING_KEY: ${{ env.DECODED_SIGNING_KEY }}
     
     - name: Sign APK and AAB
       run: |
