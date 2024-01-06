@@ -39,9 +39,8 @@ jobs:
     
     - name: Update and Install SDK components
       run: |
-        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --update
-        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --update --sdk_root=$ANDROID_HOME
-        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "tools" "platforms;android-${ANDROID_COMPILE_SDK}" "build-tools;${ANDROID_BUILD_TOOLS_VERSION}" --sdk_root=$ANDROID_HOME --licenses
+        $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --update --sdk_root=$ANDROID_HOME
+        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "tools" "platforms;android-34" "build-tools;34.0.0" --sdk_root=$ANDROID_HOME
     
     - name: Build unsigned APK and AAB
       run: |
