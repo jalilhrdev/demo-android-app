@@ -50,10 +50,12 @@ jobs:
 
 
     - name: Decode Android Signing Key
-      run: |
-        echo "${{env.ANDROID_SIGNING_KEY}}" | base64 -d > keystore.jks
-
-              
+      id: decode_key
+      uses: timheuer/base64-to-file@v1.2
+      with:
+        fileName: 'keystore.jks'
+        encodedString: ${{ secrets.ANDROID_SIGNING_KEY }}
+    
     - name: Debug Keystore
       run: |
         ls -l keystore.jks
@@ -61,8 +63,9 @@ jobs:
         wc -l keystore.jks
     
     - name: Verify Decoded Keystore
-      run: keytool -list -v -keystore keystore.jks -storepass "${{env.KEYSTOREPASSWORD}}"
-    
+      env:
+        KEYSTOREPASSWORD: ${{ secrets.KEYSTOREPASSWORD }}
+      run: keytool -list -v -keystore keystore.jks -storepass "${KEYSTOREPASSWORD}"
     
     - name: Sign APK and AAB
       run: |
