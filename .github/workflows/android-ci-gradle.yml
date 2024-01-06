@@ -64,9 +64,11 @@ jobs:
         wc -l keystore.jks
     
     - name: Verify Decoded Keystore
-      run: keytool -list -v -keystore keystore.jks -storepass "${{ secrets.KEYSTOREPASSWORD }}"
+      env:
+        KEYSTOREPASSWORD: ${{ secrets.KEYSTOREPASSWORD }}
+      run: keytool -list -v -keystore keystore.jks -storepass "${KEYSTOREPASSWORD}"
     
-      
+    
     - name: Sign APK and AAB
       run: |
         # Decode the Android signing key and save it as keystore.jks
