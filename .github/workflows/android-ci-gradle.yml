@@ -54,7 +54,7 @@ jobs:
         DECODED_KEYSTORE_PATH: keystore.jks
       run: |
         echo $ENCODED_KEYSTORE | base64 -d > $DECODED_KEYSTORE_PATH
-    
+        cat $DECODED_KEYSTORE_PATH
     - name: Debug Keystore
       run: |
         ls -l keystore.jks
