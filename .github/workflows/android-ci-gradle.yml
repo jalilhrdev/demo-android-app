@@ -10,7 +10,7 @@ env:
   ANDROID_COMPILE_SDK: 34
   PATH_UNSIGNED: "app/build/outputs"
   ANDROID_TARGET_SDK: 34
-  CMD_TOOLS_VERSION: "10406996" # Change this to the desired version
+  CMD_TOOLS_VERSION: "10406996"
 
 jobs:
   build_and_sign:
@@ -47,40 +47,20 @@ jobs:
         chmod +x ./gradlew
         ./gradlew assembleRelease bundleRelease
 
-
     - name: Decode Android Signing Key
       run: |
-        decoded_signing_key=$(echo "${{ secrets.ANDROID_SIGNING_KEY }}" | base64 -d)
-        echo "$decoded_signing_key" > keystore.jks
-        echo "DECODED_SIGNING_KEY=$decoded_signing_key" >> $GITHUB_ENV
-    
-    - name: Debug Keystore
-      run: |
-        ls -l keystore.jks
-        tail keystore.jks
-        wc -l keystore.jks
-    
-    - name: Verify Decoded Keystore
-      run: keytool -list -v -keystore keystore.jks -storepass "${{ secrets.KEYSTOREPASSWORD }}"
-      env:
-        DECODED_SIGNING_KEY: ${{ env.DECODED_SIGNING_KEY }}
+        echo "${{ secrets.ANDROID_SIGNING_KEY }}" | base64 -d > keystore.jks
     
     - name: Sign APK and AAB
       run: |
-        # Decode the Android signing key and save it as keystore.jks
-        #echo "${{ secrets.ANDROID_SIGNING_KEY }}" | base64 -d > keystore.jks
-
-        # Verify the keystore using keytool
-        #keytool -list -v -keystore keystore.jks -storepass "${{ secrets.KEYSTOREPASSWORD }}"
-
         # Sign the Release APK using apksigner from Android Build Tools
-        "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/apksigner" sign --ks $(pwd)/keystore.jks --ks-key-alias ${{ secrets.ALIAS }} --ks-pass pass:${{ secrets.KEYSTOREPASSWORD }}  --in $(pwd)/${{ env.PATH_UNSIGNED }}/apk/release/app-release-unsigned.apk --out $(pwd)/${{ env.PATH_UNSIGNED }}/apk/release/app-release-signed.apk 
+        "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/apksigner" sign --ks keystore.jks --ks-key-alias ${{ secrets.ALIAS }} --ks-pass pass:${{ secrets.KEYSTOREPASSWORD }} --in $(pwd)/${{ env.PATH_UNSIGNED }}/apk/release/app-release-unsigned.apk --out $(pwd)/${{ env.PATH_UNSIGNED }}/apk/release/app-release-signed.apk 
         
         # Verify the signed Release APK
         "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/apksigner" verify --verbose $(pwd)/${{ env.PATH_UNSIGNED }}/apk/release/app-release-signed.apk
 
         # Sign the AAB using bundletool
-        "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/bundletool" build-bundle --modules=$(pwd)/${{ env.PATH_UNSIGNED }}/bundle/release/app-release.aab --output=$(pwd)/${{ env.PATH_UNSIGNED }}/bundle/release/signed_app_bundle.aab --ks $(pwd)/keystore.jks --ks-pass pass:${{ secrets.KEYSTOREPASSWORD }} --ks-key-alias ${{ secrets.ALIAS }} --key-pass pass:${{ secrets.KEYPASSWORD }}
+        "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/bundletool" build-bundle --modules=$(pwd)/${{ env.PATH_UNSIGNED }}/bundle/release/app-release.aab --output=$(pwd)/${{ env.PATH_UNSIGNED }}/bundle/release/signed_app_bundle.aab --ks keystore.jks --ks-pass pass:${{ secrets.KEYSTOREPASSWORD }} --ks-key-alias ${{ secrets.ALIAS }} --key-pass pass:${{ secrets.KEYPASSWORD }}
         
         # Verify the signed AAB
         "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/bundletool" validate --bundle $(pwd)/${{ env.PATH_UNSIGNED }}/bundle/release/signed_app_bundle.aab
