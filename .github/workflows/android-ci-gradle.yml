@@ -40,20 +40,32 @@ jobs:
     - name: Update and Install SDK components
       run: |
         $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --update --sdk_root=$ANDROID_HOME
-        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "tools" "platforms;android-34" "build-tools;34.0.0" --sdk_root=$ANDROID_HOME
+        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "tools" "platforms;android-${ANDROID_COMPILE_SDK}" "build-tools;${ANDROID_BUILD_TOOLS_VERSION}" --sdk_root=$ANDROID_HOME
     
     - name: Build unsigned APK and AAB
       run: |
         chmod +x ./gradlew
         ./gradlew assembleRelease bundleRelease
 
+
+    - name: Decode Keystore
+      env:
+        ENCODED_KEYSTORE: ${{ secrets.ANDROID_SIGNING_KEY }}
+        DECODED_KEYSTORE_PATH: keystore.jks
+      run: |
+        echo $ENCODED_KEYSTORE | base64 -d > $DECODED_KEYSTORE_PATH
+    
+    - name: Verify Decoded Keystore
+      run: keytool -list -v -keystore keystore.jks -storepass "${{ secrets.KEYSTOREPASSWORD }}"
+
+        
     - name: Sign APK and AAB
       run: |
         # Decode the Android signing key and save it as keystore.jks
-        echo "${{ secrets.ANDROID_SIGNING_KEY }}" | base64 -d > keystore.jks
+        #echo "${{ secrets.ANDROID_SIGNING_KEY }}" | base64 -d > keystore.jks
 
         # Verify the keystore using keytool
-        keytool -list -v -keystore keystore.jks -storepass "${{ secrets.KEYSTOREPASSWORD }}"
+        #keytool -list -v -keystore keystore.jks -storepass "${{ secrets.KEYSTOREPASSWORD }}"
 
         # Sign the Release APK using apksigner from Android Build Tools
         "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/apksigner" sign --ks $(pwd)/keystore.jks --ks-key-alias ${{ secrets.ALIAS }} --ks-pass pass:${{ secrets.KEYSTOREPASSWORD }}  --in $(pwd)/${{ env.PATH_UNSIGNED }}/apk/release/app-release-unsigned.apk --out $(pwd)/${{ env.PATH_UNSIGNED }}/apk/release/app-release-signed.apk 
