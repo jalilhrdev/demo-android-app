@@ -78,12 +78,12 @@ jobs:
       run: |
         "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/apksigner" verify --verbose $(pwd)/${{ env.PATH_UNSIGNED }}/apk/release/app-release-signed.apk
 
-    - name: Sign the AAB using bundletool
+    - name: Sign the AAB using jarsigner
       run: |
-        "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/bundletool" build-bundle --modules=$(pwd)/${{ env.PATH_UNSIGNED }}/bundle/release/app-release.aab --output=$(pwd)/${{ env.PATH_UNSIGNED }}/bundle/release/signed_app_bundle.aab --ks $(pwd)/keystore.jks --ks-pass pass:${{ secrets.KEYSTOREPASSWORD }} --ks-key-alias ${{ secrets.ALIAS }} --key-pass pass:${{ secrets.KEYPASSWORD }}
-    
-        # Verify the signed AAB
-        "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/bundletool" validate --bundle $(pwd)/${{ env.PATH_UNSIGNED }}/bundle/release/signed_app_bundle.aab
+        jarsigner -keystore keystore.jks -storepass "${{ secrets.KEYSTOREPASSWORD }}" -keypass "${{ secrets.KEYPASSWORD }}" -signedjar $(pwd)/${{ env.PATH_UNSIGNED }}/bundle/release/app-release-signed.aab $(pwd)/${{ env.PATH_UNSIGNED }}/bundle/release/app-release.aab "${{ secrets.ALIAS }}"
+        
+    - name: Verify the signed AAB
+      run: jarsigner -verify -keystore keystore.jks -storepass "${{ secrets.KEYSTOREPASSWORD }}" -keypass "${{ secrets.KEYPASSWORD }}" $(pwd)/${{ env.PATH_UNSIGNED }}/bundle/release/app-release-signed.aab
     
   
     - name: Upload APK and AAB as artifacts
