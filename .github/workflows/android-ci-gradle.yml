@@ -77,3 +77,10 @@ jobs:
     - name: Verify Signed APK
       run: |
         "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/apksigner" verify --verbose $(pwd)/${{ env.PATH_UNSIGNED }}/apk/release/app-release-signed.apk
+
+    - name: Upload APK and AAB as artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: app-artifacts
+        path: |
+          $(pwd)/${{ env.PATH_UNSIGNED }}/apk/release/app-release-signed.apk
