@@ -78,9 +78,19 @@ jobs:
       run: |
         "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/apksigner" verify --verbose $(pwd)/${{ env.PATH_UNSIGNED }}/apk/release/app-release-signed.apk
 
+
+    - name: Sign AAB
+      run: |
+        "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/apksigner" sign --ks keystore.jks --ks-key-alias ${{ secrets.ALIAS }} --ks-pass pass:${{ secrets.KEYSTOREPASSWORD }} --in $(pwd)/${{ env.PATH_UNSIGNED }}/bundle/release/app-release.aab --out $(pwd)/${{ env.PATH_UNSIGNED }}/bundle/release/app-release-signed.aab 
+
+    - name: Verify Signed AAB
+      run: |
+        "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/apksigner" verify --verbose $(pwd)/${{ env.PATH_UNSIGNED }}/bundle/release/app-release-signed.aab
+
     - name: Upload APK and AAB as artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: app-artifacts
         path: |
           $(pwd)/${{ env.PATH_UNSIGNED }}/apk/release/app-release-signed.apk
+          $(pwd)/${{ env.PATH_UNSIGNED }}/bundle/release/app-release-signed.aab
