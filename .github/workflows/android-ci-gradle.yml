@@ -67,10 +67,10 @@ jobs:
         wc -l keystore.jks
 
     - name: Verify Decoded Keystore
-      run: keytool -list -v -keystore keystore.jks -storepass "${{ secrets.KEYSTOREPASSWORD }}"
+      run: keytool -list -v -keystore keystore.jks -storepass pass:${{ secrets.KEYSTOREPASSWORD }}
       env:
         DECODED_SIGNING_KEY: ${{ env.DECODED_SIGNING_KEY }}
-        
+
     - name: Sign APK
       run: |
         "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/apksigner" sign --ks keystore.jks --ks-key-alias ${{ secrets.ALIAS }} --ks-pass pass:${{ secrets.KEYSTOREPASSWORD }} --in $(pwd)/${{ env.PATH_UNSIGNED }}/apk/release/app-release-unsigned.apk --out $(pwd)/${{ env.PATH_UNSIGNED }}/apk/release/app-release-signed.apk 
