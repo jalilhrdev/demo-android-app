@@ -67,9 +67,8 @@ jobs:
         wc -l keystore.jks
 
     - name: Verify Decoded Keystore
-      run: keytool -list -v -keystore keystore.jks -storepass pass:${{ secrets.KEYSTOREPASSWORD }}
-      env:
-        DECODED_SIGNING_KEY: ${{ env.DECODED_SIGNING_KEY }}
+      run: |
+        keytool -list -v -keystore keystore.jks -storepass "${{ secrets.KEYSTOREPASSWORD }}"
 
     - name: Sign APK
       run: |
