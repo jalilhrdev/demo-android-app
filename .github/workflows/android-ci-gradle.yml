@@ -66,7 +66,7 @@ jobs:
         tail keystore.jks
         wc -l keystore.jks
 
-    - name: Verify Decoded Keystore
+    - name: Verify Decoded Keystore with keystorepass
       run: |
         keytool -list -v -keystore keystore.jks -storepass "${{ secrets.KEYSTOREPASSWORD }}"
 
