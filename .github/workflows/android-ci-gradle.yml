@@ -78,16 +78,14 @@ jobs:
       run: |
         "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/apksigner" verify --verbose $(pwd)/${{ env.PATH_UNSIGNED }}/apk/release/app-release-signed.apk
 
-
     - name: Sign the AAB using bundletool
       run: |
         "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/bundletool" build-bundle --modules=$(pwd)/${{ env.PATH_UNSIGNED }}/bundle/release/app-release.aab --output=$(pwd)/${{ env.PATH_UNSIGNED }}/bundle/release/signed_app_bundle.aab --ks $(pwd)/keystore.jks --ks-pass pass:${{ secrets.KEYSTOREPASSWORD }} --ks-key-alias ${{ secrets.ALIAS }} --key-pass pass:${{ secrets.KEYPASSWORD }}
-        
-    - name: Verify the signed AAB
-      run: |
+    
+        # Verify the signed AAB
         "${ANDROID_HOME}/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/bundletool" validate --bundle $(pwd)/${{ env.PATH_UNSIGNED }}/bundle/release/signed_app_bundle.aab
     
-    
+  
     - name: Upload APK and AAB as artifacts
       uses: actions/upload-artifact@v4
       with:
