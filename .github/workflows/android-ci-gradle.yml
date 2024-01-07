@@ -80,10 +80,11 @@ jobs:
 
     - name: Sign the AAB using jarsigner
       run: |
-        jarsigner -keystore keystore.jks -storepass "${{ secrets.KEYSTOREPASSWORD }}" -keypass "${{ secrets.KEYPASSWORD }}" -signedjar $(pwd)/${{ env.PATH_UNSIGNED }}/bundle/release/app-release-signed.aab $(pwd)/${{ env.PATH_UNSIGNED }}/bundle/release/app-release.aab "${{ secrets.ALIAS }}"
+        jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore keystore.jks --storepass "${{ secrets.KEYSTOREPASSWORD }}"  -signedjar  $(pwd)/${{ env.PATH_UNSIGNED }}/bundle/release/app-release-signed.aab $(pwd)/${{ env.PATH_UNSIGNED }}/bundle/release/app-release.aab ${{ secrets.ALIAS }} 
         
     - name: Verify the signed AAB
-      run: jarsigner -verify -keystore keystore.jks -storepass "${{ secrets.KEYSTOREPASSWORD }}" -keypass "${{ secrets.KEYPASSWORD }}" $(pwd)/${{ env.PATH_UNSIGNED }}/bundle/release/app-release-signed.aab
+      run: |
+        jarsigner -verify -verbose -certs  $(pwd)/${{ env.PATH_UNSIGNED }}/bundle/release/app-release-signed.aab
     
   
     - name: Upload APK and AAB as artifacts
