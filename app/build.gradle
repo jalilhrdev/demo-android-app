@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace 'demo.jalilhrdev.myapp'
+    namespace 'demo.jalilhrdev.cicd'
     compileSdk 34
 
     defaultConfig {
-        applicationId "demo.jalilhrdev.myapp"
+        applicationId "demo.jalilhrdev.cicd"
         minSdk 24
         targetSdk 34
         versionCode 1

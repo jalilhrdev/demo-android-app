@@ -1,4 +1,4 @@
-package demo.jalilhrdev.myapp;
+package demo.jalilhrdev.cicd;
 
 import org.junit.Test;
 

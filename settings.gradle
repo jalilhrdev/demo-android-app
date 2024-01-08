@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "mydemo"
+rootProject.name = "Android App CI CD Playground"
 include ':app'
