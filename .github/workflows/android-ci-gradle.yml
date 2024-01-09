@@ -96,10 +96,14 @@ jobs:
           app/build/outputs/apk/release/app-release-signed.apk
 
 
-    - name: Publish to Play Store U
+    - name: Publish to Play Store
       if: success()
-      uses: sagar-viradiya/internal-app-sharing-action@v1.1.0
+      uses: r0adkll/upload-google-play@v1
       with:
         serviceAccountJsonPlainText: ${{ secrets.PLAY_STORE_JSON_KEY }}
         packageName: demo.jalilhrdev.cicd
-        aabFilePath: app/build/outputs/bundle/release/app-release-signed.aab
+        releaseFiles: app/build/outputs/bundle/release/app-release-signed.aab
+        track: production
+        inAppUpdatePriority: 2
+        userFraction: 0.33
+        status: inProgress
