@@ -103,4 +103,6 @@ jobs:
         packageName: demo.jalilhrdev.cicd
         releaseFiles: app/build/outputs/bundle/release/app-release-signed.aab
         track: production
+        inAppUpdatePriority: 2
+        userFraction: 0.33
         status: inProgress
